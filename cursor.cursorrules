@@ -1,0 +1,124 @@
+This is a React TypeScript project using Vite as the build tool and Bun as the package manager. The project follows these key principles:
+
+Tech Stack:
+- Bun for package management and running scripts
+- Vite for development and building
+- TypeScript for type safety
+- React for UI
+- shadcn/ui for component library
+- Tailwind CSS for styling
+- i18n for internationalization (Hebrew, English, Arabic)
+- React Query for data fetching
+- React Router for routing
+
+Project Structure:
+/src
+  /app             # App-wide configurations and providers
+  /assets          # Static assets like images and icons
+  /components      # React components
+    /ui            # shadcn/ui components
+    /common        # Shared components
+    /features      # Feature-specific components
+  /config          # Configuration files
+  /hooks          # Custom React hooks
+  /i18n           # Internationalization files
+  /lib            # Utility functions
+  /services       # API and other services
+  /styles         # Global styles and Tailwind config
+  /types          # TypeScript type definitions
+
+Coding Standards:
+- Use TypeScript strict mode
+- Follow SOLID principles
+- Keep components small and focused
+- Use function components with hooks
+- Implement RTL support for Hebrew/Arabic
+- Use React Query for API calls
+- Keep API calls in services, not components
+- Use DTOs for API data structures
+- Use Tailwind for styling
+- SVGs for icons
+- Use shadcn/ui components when possible
+
+File Naming:
+- React components: PascalCase.tsx
+- Utilities: kebab-case.ts
+- Hooks: use-kebab-case.ts
+- Types: kebab-case.types.ts
+- Services: kebab-case.service.ts
+
+Important Commands:
+- Development: bun run dev
+- Build: bun run build
+- Add shadcn component: bunx shadcn-ui@latest add [component-name]
+- Install dependencies: bun add [package-name]
+- Development dependencies: bun add -d [package-name]
+- Remove dependencies: bun remove [package-name]
+- Run TypeScript checks: bun run typecheck
+- Run linting: bun run lint
+- Format code: bun run format
+
+Build System:
+- Uses Vite configured with Bun for faster builds
+- Support for development hot module replacement
+- Production builds with code splitting
+- Environment variable support through .env files
+- Path aliases configured in tsconfig.json and vite.config.ts
+
+Project Features:
+- Multi-language support (Hebrew, English, Arabic)
+- RTL layout support
+- Courier tracking system
+- Order management interface
+- Mobile-responsive design
+
+Development Guidelines:
+- Always use TypeScript features for type safety
+- Follow the component composition pattern
+- Use React Query for server state management
+- Keep business logic in custom hooks
+- Use Zod for runtime type validation
+- Implement error boundaries for error handling
+- Use React Suspense for loading states
+- Follow accessibility best practices
+- Write unit tests for critical functionality
+
+Key Notes:
+- All components should support RTL layout
+- Use shadcn/ui components as base building blocks
+- Maintain type safety throughout the project
+- Follow the mobile-first approach
+- Keep accessibility in mind
+- Use bun for all package management operations
+
+Git Workflow:
+- Use feature branches
+- Follow conventional commits
+- Squash commits when merging
+- Keep PR sizes manageable
+- Run typecheck and lint before committing
+
+# Additional Technical Details
+
+Config Files:
+- postcss.config.cjs (not .ts) for PostCSS configuration
+- tailwind.config.ts for Tailwind
+- eslint.config.ts for ESLint
+- tsconfig.json for TypeScript
+- .prettierrc for Prettier
+
+Entry Points:
+- index.html as the main HTML entry
+- src/main.tsx as the React entry point
+- src/App.tsx as the root component
+
+Styling:
+- globals.css in src/styles for base styles
+- Tailwind directives (@tailwind base, components, utilities)
+- RTL support via [dir="rtl"] attribute
+- CSS variables for theming in :root
+
+Build Configuration:
+- Use .cjs extension for CommonJS configs (like PostCSS)
+- Use .ts extension for TypeScript configs
+- Keep package.json type as "module"
