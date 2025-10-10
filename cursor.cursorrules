@@ -1,0 +1,408 @@
+# Kutum - Family Management System
+
+## Tech Stack
+
+**Core Technologies:**
+- **Bun** - Package manager and runtime
+- **Vite 6.0.5** - Build tool and dev server
+- **React 18.3.1** - UI framework
+- **TypeScript 5.7.2** - Type safety
+- **React Router DOM 7.1.1** - Client-side routing
+- **Tailwind CSS 3.4.17** - Utility-first styling
+
+**UI & UX:**
+- **Lucide React** - Icon library
+- **React Hot Toast** - Toast notifications
+- **React Hook Form** - Form state management
+- **Custom components** - No UI library (building custom)
+
+**Internationalization:**
+- **i18next 24.2.0** - Translation framework
+- **react-i18next 15.2.0** - React bindings
+- Support for: English, Hebrew (RTL support ready)
+
+---
+
+## Project Structure
+
+```
+/src
+  /assets              # Static assets (logos, images)
+  /components
+    /auth              # Authentication components (ProtectedRoute)
+    /common            # Shared components (Pagination)
+    /layout            # Layout components (TopNav)
+    /ui                # Future: Reusable UI components
+  /contexts            # React contexts (AuthContext)
+  /hooks               # Future: Custom React hooks
+  /lib                 # Future: Third-party library configurations
+  /pages
+    /auth              # LoginPage, RegisterPage
+    /admin             # Admin dashboard and management pages
+    /user              # User dashboard and feature pages
+    DashboardEntry.tsx # Route handler for role-based dashboards
+  /services            # Future: API services and business logic
+  /types               # TypeScript type definitions
+  /utils
+    /constants         # App, storage, routes, UI, validation constants
+    /helpers           # String, validation, language, async helpers
+    /functions         # Debounce, throttle utilities
+```
+
+---
+
+## Coding Standards
+
+### TypeScript
+- Use **strict mode** (enabled in tsconfig.json)
+- Define interfaces for all props and data structures
+- Use `type` for unions/intersections, `interface` for object shapes
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use proper return types for functions
+
+### React Components
+- Use **function components** with hooks only
+- Keep components **small and focused** (single responsibility)
+- Extract complex logic into custom hooks
+- Use composition over prop drilling
+- Implement proper error boundaries for critical sections
+
+### State Management
+- Use React Context for global state (auth, theme, etc.)
+- Use local state (`useState`) for component-specific data
+- Use `useReducer` for complex state logic
+- Store data in localStorage for persistence
+- Dispatch custom events (`dataChanged`) for cross-component updates
+
+### File Organization
+- Group related functionality together
+- Keep page components in their respective feature folders
+- Extract reusable components to `/components/common` or `/components/ui`
+- Store business logic in `/services` when implemented
+- Keep types close to usage, common types in `/types`
+
+---
+
+## Naming Conventions
+
+### Files
+- **React Components:** `PascalCase.tsx` (e.g., `LoginPage.tsx`)
+- **Utilities:** `kebab-case.ts` (e.g., `string.helpers.ts`)
+- **Hooks:** `use-kebab-case.ts` or `useCamelCase.ts`
+- **Types:** `kebab-case.types.ts` or inline in component files
+- **Constants:** `kebab-case.constants.ts`
+
+### Code
+- **Components:** `PascalCase` (e.g., `UserDashboard`)
+- **Variables/Functions:** `camelCase` (e.g., `handleSubmit`)
+- **Constants:** `UPPER_SNAKE_CASE` (e.g., `STORAGE_KEYS`)
+- **Types/Interfaces:** `PascalCase` (e.g., `UserProfile`)
+- **CSS Classes:** `kebab-case` (Tailwind utilities)
+
+---
+
+## Styling Guidelines
+
+### Tailwind CSS
+- Use Tailwind utility classes as primary styling method
+- Custom colors defined in `tailwind.config.js`:
+  - `primary` (blue tones)
+  - `kutum` (brand cyan/sky blue)
+  - `accent` (purple tones)
+- Responsive breakpoints: `mobile`, `tablet`, `desktop`
+- Use custom classes in `index.css` for repeated patterns:
+  - `.btn-primary`, `.card`, `.input-field`, `.gradient-btn`
+
+### Responsive Design
+- Mobile-first approach
+- Test on multiple breakpoints: 360px, 414px, 768px, 1024px, 1280px
+- Use responsive utilities: `sm:`, `md:`, `lg:`, `xl:`
+- Ensure touch-friendly interfaces (44x44px minimum for buttons)
+
+### RTL Support
+- Structure supports RTL via `[dir="rtl"]` attribute
+- Use logical properties when possible
+- Test with Hebrew locale when RTL is implemented
+
+---
+
+## Important Bun Commands
+
+```bash
+# Development
+bun run dev              # Start dev server (port 3000)
+bun run build            # TypeScript compile + Vite build
+bun run preview          # Preview production build
+bun run lint             # Run ESLint
+
+# Package Management
+bun add [package]        # Add dependency
+bun add -d [package]     # Add dev dependency
+bun remove [package]     # Remove dependency
+bun install              # Install all dependencies
+```
+
+---
+
+## Authentication & Authorization
+
+### User Roles
+- **Admin:** Full system access (configuration management)
+- **User:** Family data access (people, documents, vehicles, health)
+
+### Flow
+1. Login/Register via `/` and `/register`
+2. User stored in localStorage (`kutum_user`)
+3. `ProtectedRoute` guards private routes
+4. `DashboardEntry` redirects based on role
+5. `AuthContext` manages auth state globally
+
+### Demo Credentials
+- Admin: `admin@kutum.com` / `admin123`
+- Regular users: Register via `/register`
+
+---
+
+## Data Storage (Current)
+
+### LocalStorage Keys
+```typescript
+kutum_user              // Current authenticated user
+kutum_users             // All registered users
+kutum_people            // Family members
+kutum_documents         // Documents
+kutum_vehicles          // Vehicles
+kutum_health_records    // Health records
+kutum_blood_groups      // Admin: Blood groups config
+kutum_document_types    // Admin: Document types config
+kutum_relation_types    // Admin: Relation types config
+kutum_clothing_sizes    // Admin: Clothing sizes config
+```
+
+### Future: API Integration
+- Services folder ready for API layer
+- Replace localStorage with REST/GraphQL calls
+- Implement proper authentication (JWT/OAuth)
+- Add loading and error states
+
+---
+
+## Component Development
+
+### Best Practices
+1. **Props:** Always define TypeScript interface
+2. **State:** Keep local, lift only when needed
+3. **Effects:** Use `useEffect` with proper dependencies
+4. **Memoization:** Use `useMemo`/`useCallback` for expensive operations
+5. **Accessibility:** Use semantic HTML and ARIA labels
+6. **Forms:** Use React Hook Form for complex forms
+
+### Example Structure
+```tsx
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+
+interface MyComponentProps {
+  title: string
+  onSubmit: (data: FormData) => void
+}
+
+export default function MyComponent({ title, onSubmit }: MyComponentProps) {
+  const [data, setData] = useState<FormData>({})
+  const { user } = useAuth()
+
+  useEffect(() => {
+    // Side effects here
+  }, [dependencies])
+
+  const handleSubmit = () => {
+    // Handler logic
+    onSubmit(data)
+  }
+
+  return (
+    <div className="p-4">
+      {/* JSX here */}
+    </div>
+  )
+}
+```
+
+---
+
+## Path Aliases
+
+Configured in `tsconfig.json` and `vite.config.ts`:
+```typescript
+@/*        →   ./src/*
+```
+
+**Usage:**
+```typescript
+import { useAuth } from '@/contexts/AuthContext'
+import LoginPage from '@/pages/auth/LoginPage'
+import { STORAGE_KEYS } from '@/utils/constants'
+```
+
+---
+
+## Key Features
+
+### Admin Dashboard
+- System configuration management
+- CRUD operations for:
+  - Blood Groups
+  - Document Types
+  - Relation Types
+  - Clothing Sizes
+- Read-only predefined items
+- Pagination support
+
+### User Features
+- **People Management:** Family member profiles with details
+- **Documents:** Upload, view, share, track expiry dates
+- **Vehicles:** Track insurance, PUC, RC with expiry alerts
+- **Health Records:** Conditions, medications, vaccinations, allergies
+
+---
+
+## Development Guidelines
+
+### Before Committing
+1. ✅ Run TypeScript checks
+2. ✅ Run ESLint
+3. ✅ Test in browser
+4. ✅ Check responsive layouts
+5. ✅ Verify no console errors
+
+### Code Quality
+- Write self-documenting code
+- Add comments for complex logic only
+- Follow DRY principle
+- Keep functions small (< 50 lines ideal)
+- Extract magic numbers to constants
+
+### Performance
+- Avoid unnecessary re-renders
+- Use `React.memo` for expensive components
+- Implement pagination for large lists
+- Lazy load images and heavy components
+- Debounce search inputs
+
+### Security
+- Never commit sensitive data
+- Sanitize user inputs
+- Validate on both client and server (when backend exists)
+- Use HTTPS in production
+- Implement CSRF protection
+
+---
+
+## Error Handling
+
+### Current Approach
+- Toast notifications via `react-hot-toast`
+- Try-catch blocks for async operations
+- Fallback UI for missing data
+- Console logging for debugging
+
+### Future Improvements
+- Implement error boundaries
+- Centralized error logging
+- User-friendly error messages
+- Retry mechanisms for failed requests
+
+---
+
+## Testing Strategy (Future)
+
+When implementing tests:
+- Unit tests for utility functions
+- Component tests with React Testing Library
+- E2E tests for critical user flows
+- Test accessibility compliance
+- Test responsive behavior
+
+---
+
+## Environment Variables
+
+Defined in `vite-env.d.ts`:
+```typescript
+VITE_APP_TITLE    // Application title
+VITE_API_URL      // Future: API base URL
+VITE_PAGE_SIZE    // Pagination size (default: 10)
+```
+
+---
+
+## Git Workflow
+
+### Commit Messages
+Follow Conventional Commits:
+- `feat:` New features
+- `fix:` Bug fixes
+- `refactor:` Code restructuring
+- `style:` Formatting changes
+- `docs:` Documentation updates
+- `chore:` Build/tooling changes
+
+### Branching
+- `main` - Production-ready code
+- `develop` - Integration branch
+- `feature/*` - New features
+- `fix/*` - Bug fixes
+- `refactor/*` - Code improvements
+
+---
+
+## Browser Support
+
+**Target Browsers:**
+- Chrome (latest 2 versions)
+- Firefox (latest 2 versions)
+- Safari (latest 2 versions)
+- Edge (latest 2 versions)
+
+**Mobile:**
+- iOS Safari (latest)
+- Chrome Mobile (latest)
+
+---
+
+## Accessibility Guidelines
+
+- Use semantic HTML elements
+- Ensure keyboard navigation works
+- Add ARIA labels where needed
+- Maintain color contrast ratios (WCAG AA)
+- Support screen readers
+- Implement focus indicators
+
+---
+
+## Notes
+
+- Project uses **localStorage** for data persistence (temporary)
+- **No backend** currently - API integration planned
+- **RTL support** infrastructure ready but not fully implemented
+- **i18n** library installed but translations incomplete
+- Follows **mobile-first** responsive design
+- Custom **Tailwind configuration** with brand colors
+- Uses **path aliases** (`@/`) for cleaner imports
+
+---
+
+## Future Roadmap
+
+### Planned Enhancements
+1. Backend API integration
+2. Complete i18n translations (Hebrew, English)
+3. Full RTL implementation
+4. Custom UI component library
+5. Custom hooks library
+6. Comprehensive testing suite
+7. Performance monitoring
+8. Analytics integration
+9. PWA capabilities
+10. Dark mode support
