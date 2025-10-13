@@ -1,8 +1,10 @@
-import { useAuth } from '@/contexts/AuthContext'
-import { Users, FileText, Car, Bell, Plus, Heart, MessageCircle, Clock, Activity, X, Send, Minimize2 } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import TopNav from '@/components/layout/TopNav'
+import { useAuth } from '@/contexts/AuthContext'
+import { Activity, Bell, Car, Clock, FileText, Heart, Plus, Users, X } from 'lucide-react'
+// CHATBOT DISABLED - Removed unused imports: MessageCircle, Minimize2, Send
+import { useEffect, useState } from 'react'
+// CHATBOT DISABLED - Removed useRef (was used for chatEndRef)
+import { useNavigate } from 'react-router-dom'
 
 type FamilyMember = {
   id: string
@@ -187,24 +189,24 @@ export default function UserDashboardPage() {
   })
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
 
-  // ========== CHAT STATE ==========
-  // Controls the chatbot interface and conversation
+  // ========== CHAT STATE - DISABLED ==========
+  // CHATBOT DISABLED - Uncomment below to re-enable chatbot functionality
   
-  const [showChat, setShowChat] = useState(false) // Controls whether chat panel is visible
+  // const [showChat, setShowChat] = useState(false) // Controls whether chat panel is visible
   
-  // Stores all chat messages (conversation history)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant', // Bot's welcome message
-      content: 'Hello! I can help you with ALL your family management data! Try asking:\n• "How many documents have been uploaded?"\n• "What vehicles do I have?"\n• "What reminders are due?"\n• "Tell me about my family"\n• "Give me a summary of everything"',
-      timestamp: new Date().toISOString()
-    }
-  ])
+  // // Stores all chat messages (conversation history)
+  // const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+  //   {
+  //     id: '1',
+  //     role: 'assistant', // Bot's welcome message
+  //     content: 'Hello! I can help you with ALL your family management data! Try asking:\n• "How many documents have been uploaded?"\n• "What vehicles do I have?"\n• "What reminders are due?"\n• "Tell me about my family"\n• "Give me a summary of everything"',
+  //     timestamp: new Date().toISOString()
+  //   }
+  // ])
   
-  const [chatInput, setChatInput] = useState('') // Current text in the input field
-  const [isLoading, setIsLoading] = useState(false) // Shows loading indicator while waiting for AI response
-  const chatEndRef = useRef<HTMLDivElement>(null) // Reference for auto-scrolling to bottom
+  // const [chatInput, setChatInput] = useState('') // Current text in the input field
+  // const [isLoading, setIsLoading] = useState(false) // Shows loading indicator while waiting for AI response
+  // const chatEndRef = useRef<HTMLDivElement>(null) // Reference for auto-scrolling to bottom
 
   // Function to add activity
   const addActivity = (type: Activity['type'], action: Activity['action'], description: string) => {
@@ -553,108 +555,101 @@ export default function UserDashboardPage() {
   }, [])
 
   /**
-   * ========== CHAT FUNCTIONALITY ==========
-   * Handles sending messages to the AI chatbot and receiving responses
-   * 
-   * Process:
-   * 1. User types a question and clicks send
-   * 2. Gathers ALL data from localStorage (family, documents, vehicles, health, reminders)
-   * 3. Sends question + data to backend API
-   * 4. Backend uses RAG + OpenAI to generate intelligent answer
-   * 5. Displays response in chat interface
+   * ========== CHAT FUNCTIONALITY - DISABLED ==========
+   * CHATBOT DISABLED - Uncomment below to re-enable chatbot functionality
    */
-  const handleSendMessage = async () => {
-    // Don't send if empty message or already loading
-    if (!chatInput.trim() || isLoading) return
+  
+  // const handleSendMessage = async () => {
+  //   // Don't send if empty message or already loading
+  //   if (!chatInput.trim() || isLoading) return
 
-    // Create user message object
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user', // Indicates this is from the user
-      content: chatInput,
-      timestamp: new Date().toISOString()
-    }
+  //   // Create user message object
+  //   const userMessage: ChatMessage = {
+  //     id: Date.now().toString(),
+  //     role: 'user', // Indicates this is from the user
+  //     content: chatInput,
+  //     timestamp: new Date().toISOString()
+  //   }
 
-    // Add user message to chat history immediately (optimistic UI)
-    setChatMessages(prev => [...prev, userMessage])
-    setChatInput('') // Clear input field
-    setIsLoading(true) // Show loading indicator
+  //   // Add user message to chat history immediately (optimistic UI)
+  //   setChatMessages(prev => [...prev, userMessage])
+  //   setChatInput('') // Clear input field
+  //   setIsLoading(true) // Show loading indicator
 
-    try {
-      // Gather ALL data from localStorage for comprehensive AI context
-      const allData = {
-        familyMembers: familyMembers, // Family member details
-        documents: JSON.parse(localStorage.getItem('kutum_documents') || '[]'), // All uploaded documents
-        vehicles: JSON.parse(localStorage.getItem('kutum_vehicles') || '[]'), // Vehicle information
-        health: JSON.parse(localStorage.getItem('kutum_health') || '[]'), // Health records
-        activities: recentActivities, // Recent activity log
-        reminders: reminders, // Active reminders
-        stats: {
-          // Summary statistics for quick answers
-          totalFamily: peopleCount,
-          totalDocuments: JSON.parse(localStorage.getItem('kutum_documents') || '[]').length,
-          totalVehicles: JSON.parse(localStorage.getItem('kutum_vehicles') || '[]').length,
-          totalReminders: reminders.length
-        }
-      }
+  //   try {
+  //     // Gather ALL data from localStorage for comprehensive AI context
+  //     const allData = {
+  //       familyMembers: familyMembers, // Family member details
+  //       documents: JSON.parse(localStorage.getItem('kutum_documents') || '[]'), // All uploaded documents
+  //       vehicles: JSON.parse(localStorage.getItem('kutum_vehicles') || '[]'), // Vehicle information
+  //       health: JSON.parse(localStorage.getItem('kutum_health') || '[]'), // Health records
+  //       activities: recentActivities, // Recent activity log
+  //       reminders: reminders, // Active reminders
+  //       stats: {
+  //         // Summary statistics for quick answers
+  //         totalFamily: peopleCount,
+  //         totalDocuments: JSON.parse(localStorage.getItem('kutum_documents') || '[]').length,
+  //         totalVehicles: JSON.parse(localStorage.getItem('kutum_vehicles') || '[]').length,
+  //         totalReminders: reminders.length
+  //       }
+  //     }
 
-      // Send question + all data to backend chatbot API
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: chatInput, // The user's question
-          allData: allData // Complete context for AI
-        })
-      })
+  //     // Send question + all data to backend chatbot API
+  //     const response = await fetch('http://localhost:8000/api/chat', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         message: chatInput, // The user's question
+  //         allData: allData // Complete context for AI
+  //       })
+  //     })
 
-      // Check if request was successful
-      if (!response.ok) {
-        throw new Error('Failed to get response')
-      }
+  //     // Check if request was successful
+  //     if (!response.ok) {
+  //       throw new Error('Failed to get response')
+  //     }
 
-      // Parse the AI response
-      const data = await response.json()
+  //     // Parse the AI response
+  //     const data = await response.json()
 
-      // Create assistant message object with AI's answer
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant', // Indicates this is from the AI
-        content: data.response, // The AI's answer
-        timestamp: data.timestamp // When the response was generated
-      }
+  //     // Create assistant message object with AI's answer
+  //     const assistantMessage: ChatMessage = {
+  //       id: (Date.now() + 1).toString(),
+  //       role: 'assistant', // Indicates this is from the AI
+  //       content: data.response, // The AI's answer
+  //       timestamp: data.timestamp // When the response was generated
+  //     }
 
-      // Add AI response to chat history
-      setChatMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
-      // Handle any errors (network issues, backend down, etc.)
-      console.error('Chat error:', error)
+  //     // Add AI response to chat history
+  //     setChatMessages(prev => [...prev, assistantMessage])
+  //   } catch (error) {
+  //     // Handle any errors (network issues, backend down, etc.)
+  //     console.error('Chat error:', error)
       
-      // Show error message to user
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "Sorry, I'm having trouble connecting to the chat service. Please make sure the backend server is running at http://localhost:8000",
-        timestamp: new Date().toISOString()
-      }
-      setChatMessages(prev => [...prev, errorMessage])
-    } finally {
-      // Always reset loading state when done
-      setIsLoading(false)
-    }
-  }
+  //     // Show error message to user
+  //     const errorMessage: ChatMessage = {
+  //       id: (Date.now() + 1).toString(),
+  //       role: 'assistant',
+  //       content: "Sorry, I'm having trouble connecting to the chat service. Please make sure the backend server is running at http://localhost:8000",
+  //       timestamp: new Date().toISOString()
+  //     }
+  //     setChatMessages(prev => [...prev, errorMessage])
+  //   } finally {
+  //     // Always reset loading state when done
+  //     setIsLoading(false)
+  //   }
+  // }
 
   /**
-   * Auto-scrolls chat to bottom when new messages arrive
-   * Ensures user always sees the latest message
+   * Auto-scrolls chat to bottom when new messages arrive - DISABLED
    */
-  useEffect(() => {
-    if (showChat && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [chatMessages, showChat])
+  // useEffect(() => {
+  //   if (showChat && chatEndRef.current) {
+  //     chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
+  //   }
+  // }, [chatMessages, showChat])
 
   if (loading) {
     return (
@@ -897,10 +892,12 @@ export default function UserDashboardPage() {
         </div>
       </div>
 
+      {/* ========== CHATBOT UI - DISABLED ========== */}
+      {/* CHATBOT DISABLED - Uncomment below to re-enable chat interface */}
+      
       {/* Chat Interface */}
-      {showChat && (
+      {/* {showChat && (
         <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col z-50">
-          {/* Chat Header */}
           <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
@@ -914,7 +911,6 @@ export default function UserDashboardPage() {
             </button>
           </div>
 
-          {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
             {chatMessages.map((msg) => (
               <div
@@ -949,7 +945,6 @@ export default function UserDashboardPage() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Chat Input */}
           <div className="p-4 border-t border-gray-200 bg-white rounded-b-xl">
             <div className="flex gap-2">
               <input
@@ -971,10 +966,10 @@ export default function UserDashboardPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Floating Chat Button */}
-      {!showChat && (
+      {/* {!showChat && (
         <div className="fixed bottom-6 right-6">
           <button 
             onClick={() => setShowChat(true)}
@@ -984,7 +979,7 @@ export default function UserDashboardPage() {
             Talk with Us
           </button>
         </div>
-      )}
+      )} */}
 
       {/* Add Reminder Modal */}
       {showAddReminderModal && (

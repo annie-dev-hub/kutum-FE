@@ -1,12 +1,15 @@
-import { Heart, FileText, Users, Shirt, TrendingUp } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+// CHATBOT DISABLED - Uncomment below to re-enable chatbot
+// import AdminChatbot from '@/components/admin/AdminChatbot'
 import { useAuth } from '@/contexts/AuthContext'
+import { FileText, Heart, Shirt, TrendingUp, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import UserDashboardPage from '../user/UserDashboardPage'
 
 export default function AdminDashboardPage() {
   const { isAdmin, loading, user } = useAuth()
   const navigate = useNavigate()
+  // const [showChat, setShowChat] = useState(false) // CHATBOT DISABLED
   const [stats, setStats] = useState([
     { label: 'Trends Dashboard', value: 'Analytics', icon: TrendingUp, color: 'bg-emerald-400', href: '/admin-trends' },
     { label: 'Blood Groups', value: 6, icon: Heart, color: 'bg-red-400', href: '/blood-groups' },
@@ -15,7 +18,7 @@ export default function AdminDashboardPage() {
     { label: 'Clothing Sizes', value: 6, icon: Shirt, color: 'bg-purple-400', href: '/clothing-sizes' },
   ])
 
-  console.log('AdminDashboardPage rendering:', { isAdmin, loading, user })
+  console.log('AdminDashboardPage rendering:', { isAdmin, loading, user }) // showChat removed - chatbot disabled
 
   if (loading) {
     return (
@@ -96,6 +99,9 @@ export default function AdminDashboardPage() {
           )
         })}
       </div>
+      
+      {/* CHATBOT DISABLED - Uncomment below to re-enable */}
+      {/* <AdminChatbot isOpen={showChat} onToggle={() => setShowChat(!showChat)} /> */}
     </div>
   )
 }

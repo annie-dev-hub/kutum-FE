@@ -17,10 +17,10 @@
  * - role: 'admin' | 'user' - Determines which navigation items to show
  */
 
+import { useAuth } from '@/contexts/AuthContext'
+import { Bell, Car, FileText, Footprints, Heart, LayoutDashboard, LogOut, Menu, Settings, Shirt, TrendingUp, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { LayoutDashboard, Heart, FileText, Users, Shirt, Bell, LogOut, Car, Menu, X, Settings, TrendingUp } from 'lucide-react'
 // Import logo (TypeScript may show error, but file exists)
 import logo from '@/assets/kutum-logo.png'
 
@@ -71,11 +71,13 @@ export default function TopNav({ role }: { role: Role }) {
   // Admin navigation items - System configuration pages
   const adminItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Trends', href: '/admin-trends', icon: TrendingUp },
+    { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Blood Groups', href: '/blood-groups', icon: Heart },
     { name: 'Documents', href: '/document-types', icon: FileText },
     { name: 'Relation Types', href: '/relation-types', icon: Users },
     { name: 'Clothing Sizes', href: '/clothing-sizes', icon: Shirt },
+    { name: 'Shoe Sizes', href: '/shoe-sizes', icon: Footprints },
+    { name: 'Trends', href: '#', icon: TrendingUp },
   ]
 
   // User navigation items - Family management features
@@ -92,6 +94,12 @@ export default function TopNav({ role }: { role: Role }) {
   
   // Helper function to check if current route is active (for highlighting)
   const isActive = (href: string) => location.pathname === href
+  
+  // Handle Trends click - show coming soon popup
+  const handleTrendsClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    alert('Trends Dashboard - Coming Soon! 🚀\n\nThis feature is currently under development and will be available in a future update.')
+  }
 
   return (
     <div className="bg-white shadow-sm border-b border-gray-200">
@@ -125,7 +133,13 @@ export default function TopNav({ role }: { role: Role }) {
                 return (
                   <button
                     key={item.name}
-                    onClick={() => !isDisabled && navigate(item.href)}
+                    onClick={(e) => {
+                      if (item.name === 'Trends') {
+                        handleTrendsClick(e)
+                      } else if (!isDisabled) {
+                        navigate(item.href)
+                      }
+                    }}
                     className={
                       active
                         ? 'flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium'
@@ -206,20 +220,23 @@ export default function TopNav({ role }: { role: Role }) {
               const Icon = item.icon
               const isDisabled = item.href === '#'
               return (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    if (!isDisabled) {
-                      navigate(item.href)
-                      setMobileOpen(false)
+                  <button
+                    key={item.name}
+                    onClick={(e) => {
+                      if (item.name === 'Trends') {
+                        handleTrendsClick(e)
+                        setMobileOpen(false)
+                      } else if (!isDisabled) {
+                        navigate(item.href)
+                        setMobileOpen(false)
+                      }
+                    }}
+                    className={
+                      isDisabled
+                        ? 'w-full flex items-center gap-3 px-3 py-2 text-left text-gray-400 cursor-not-allowed'
+                        : 'w-full flex items-center gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg'
                     }
-                  }}
-                  className={
-                    isDisabled
-                      ? 'w-full flex items-center gap-3 px-3 py-2 text-left text-gray-400 cursor-not-allowed'
-                      : 'w-full flex items-center gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg'
-                  }
-                >
+                  >
                   <Icon className="h-4 w-4" />
                   {item.name}
                 </button>

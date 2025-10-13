@@ -1,32 +1,18 @@
 /**
- * Clothing Sizes Management Page
+ * Shoe Sizes Management Page
  * Connected to Backend API for CRUD operations
  */
 
 import Pagination from '@/components/common/Pagination'
 import { useAuth } from '@/contexts/AuthContext'
-import type { ClothCategory, ClothingSizeType, CreateClothingSizeDto, UpdateClothingSizeDto } from '@/types/api'
-import { clothingSizeService } from '@/utils/api'
+import type { CreateShoeSizeDto, ShoeSizeType, UpdateShoeSizeDto } from '@/types/api'
+import { shoeSizeService } from '@/utils/api'
 import { Edit2, Lock, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Navigate } from 'react-router-dom'
 
-// Clothing categories with user-friendly labels
-const CLOTH_CATEGORIES: { value: ClothCategory; label: string }[] = [
-  { value: 'pant_men', label: 'Men - Pants' },
-  { value: 'shirt_men', label: 'Men - Shirts' },
-  { value: 'pant_women', label: 'Women - Pants' },
-  { value: 'shirt_women', label: 'Women - Shirts' },
-  { value: 'dress_women', label: 'Women - Dresses' },
-  { value: 'pant_boy', label: 'Boys - Pants' },
-  { value: 'shirt_boy', label: 'Boys - Shirts' },
-  { value: 'pant_girl', label: 'Girls - Pants' },
-  { value: 'shirt_girl', label: 'Girls - Shirts' },
-  { value: 'frock_girl', label: 'Girls - Frocks' },
-]
-
-export default function ClothingSizesPage() {
+export default function ShoeSizesPage() {
   const { isAdmin } = useAuth()
   
   // Redirect non-admin users to dashboard
@@ -36,30 +22,28 @@ export default function ClothingSizesPage() {
 
   // State
   const [query, setQuery] = useState('')
-  const [rows, setRows] = useState<ClothingSizeType[]>([])
+  const [rows, setRows] = useState<ShoeSizeType[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({ 
     name: '', 
-    description: '', 
-    cloth_category: 'shirt_men' as ClothCategory 
+    description: '' 
   })
   const [submitting, setSubmitting] = useState(false)
 
   // Pagination state
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalItems, setTotalItems] = useState(0)
   const pageSize = 10
 
   /**
-   * Fetch clothing sizes from backend
+   * Fetch shoe sizes from backend
    */
-  const fetchClothingSizes = async () => {
+  const fetchShoeSizes = async () => {
     try {
       setLoading(true)
-      const response = await clothingSizeService.getAll({
+      const response = await shoeSizeService.getAll({
         page,
         limit: pageSize,
         search: query || undefined,
@@ -69,11 +53,10 @@ export default function ClothingSizesPage() {
       
       setRows(response.items)
       setTotalPages(response.meta.totalPages)
-      setTotalItems(response.meta.totalItems)
       setPage(response.meta.currentPage)
     } catch (error) {
-      console.error('Error fetching clothing sizes:', error)
-      toast.error('Failed to load clothing sizes')
+      console.error('Error fetching shoe sizes:', error)
+      toast.error('Failed to load shoe sizes')
     } finally {
       setLoading(false)
     }
@@ -81,11 +64,11 @@ export default function ClothingSizesPage() {
 
   // Fetch data when page or search query changes
   useEffect(() => {
-    fetchClothingSizes()
+    fetchShoeSizes()
   }, [page, query])
 
   /**
-   * Add new clothing size
+   * Add new shoe size
    */
   const addNew = async () => {
     const name = form.name.trim()
@@ -93,51 +76,45 @@ export default function ClothingSizesPage() {
       toast.error('Please enter a name')
       return
     }
-    if (!form.cloth_category) {
-      toast.error('Please select a category')
-      return
-    }
 
     try {
       setSubmitting(true)
-      const data: CreateClothingSizeDto = {
+      const data: CreateShoeSizeDto = {
         name,
         description: form.description.trim() || undefined,
-        cloth_category: form.cloth_category,
         is_active: true,
       }
       
-      await clothingSizeService.create(data)
-      toast.success('Clothing size added successfully')
+      await shoeSizeService.create(data)
+      toast.success('Shoe size added successfully')
       
       // Reset form and refresh list
-      setForm({ name: '', description: '', cloth_category: 'shirt_men' })
+      setForm({ name: '', description: '' })
       setShowForm(false)
       // Reset to page 1 to see the new item
       setPage(1)
-      fetchClothingSizes()
+      fetchShoeSizes()
     } catch (error) {
-      console.error('Error adding clothing size:', error)
+      console.error('Error adding shoe size:', error)
     } finally {
       setSubmitting(false)
     }
   }
 
   /**
-   * Start editing a clothing size
+   * Start editing a shoe size
    */
-  const startEdit = (row: ClothingSizeType) => {
+  const startEdit = (row: ShoeSizeType) => {
     setEditingId(row.id)
     setForm({ 
       name: row.name, 
-      description: row.description || '', 
-      cloth_category: row.cloth_category 
+      description: row.description || '' 
     })
     setShowForm(true)
   }
 
   /**
-   * Save edited clothing size
+   * Save edited shoe size
    */
   const saveEdit = async () => {
     if (editingId === null) return
@@ -147,37 +124,32 @@ export default function ClothingSizesPage() {
       toast.error('Please enter a name')
       return
     }
-    if (!form.cloth_category) {
-      toast.error('Please select a category')
-      return
-    }
 
     try {
       setSubmitting(true)
-      const data: UpdateClothingSizeDto = {
+      const data: UpdateShoeSizeDto = {
         name,
         description: form.description.trim() || undefined,
-        cloth_category: form.cloth_category,
       }
       
-      await clothingSizeService.update(editingId, data)
-      toast.success('Clothing size updated successfully')
+      await shoeSizeService.update(editingId, data)
+      toast.success('Shoe size updated successfully')
       
       // Reset form and refresh list
       setEditingId(null)
       setShowForm(false)
-      setForm({ name: '', description: '', cloth_category: 'shirt_men' })
+      setForm({ name: '', description: '' })
       // Keep current page when editing
-      fetchClothingSizes()
+      fetchShoeSizes()
     } catch (error) {
-      console.error('Error updating clothing size:', error)
+      console.error('Error updating shoe size:', error)
     } finally {
       setSubmitting(false)
     }
   }
 
   /**
-   * Delete clothing size (soft delete)
+   * Delete shoe size (soft delete)
    */
   const remove = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) {
@@ -185,15 +157,15 @@ export default function ClothingSizesPage() {
     }
 
     try {
-      await clothingSizeService.delete(id)
-      toast.success('Clothing size deleted successfully')
+      await shoeSizeService.delete(id)
+      toast.success('Shoe size deleted successfully')
       // Reset to page 1 if current page becomes empty
       if (rows.length === 1 && page > 1) {
         setPage(1)
       }
-      fetchClothingSizes()
+      fetchShoeSizes()
     } catch (error) {
-      console.error('Error deleting clothing size:', error)
+      console.error('Error deleting shoe size:', error)
     }
   }
 
@@ -203,58 +175,87 @@ export default function ClothingSizesPage() {
   const closeForm = () => {
     setShowForm(false)
     setEditingId(null)
-    setForm({ name: '', description: '', cloth_category: 'shirt_men' })
+    setForm({ name: '', description: '' })
   }
-  
-  /**
-   * Get user-friendly label for category
-   */
-  const getCategoryLabel = (category: ClothCategory): string => {
-    return CLOTH_CATEGORIES.find(c => c.value === category)?.label || category
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">Shoe Sizes Management</h1>
+          <p className="text-slate-600 mt-2">Manage shoe size types for the system</p>
+        </div>
+        <div className="card p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-slate-600">Loading shoe sizes...</span>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">Clothing Sizes Management</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">Shoe Sizes Management</h1>
+        <p className="text-slate-600 mt-2">Manage shoe size types for the system</p>
       </div>
 
-      {/* Search and Add Button */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setPage(1) // Reset to first page on search
-            }}
-            placeholder="Search by name or description..."
-            className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-white rounded-2xl border border-slate-200 shadow-soft focus:outline-none focus:ring-2 ring-primary"
-          />
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-slate-500 text-sm">
-            <Lock className="w-4 h-4" />
-            <span>Predefined items are read-only</span>
+      {rows.length === 0 && !query ? (
+        // Empty state
+        <div className="card p-8 text-center">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-100 grid place-items-center mb-4">
+            <Search className="w-8 h-8 text-slate-400" />
           </div>
-          <button 
-            onClick={() => setShowForm(true)} 
-            className="gradient-btn px-3 sm:px-4 py-2 flex items-center gap-2 whitespace-nowrap"
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">No shoe sizes found</h3>
+          <p className="text-slate-600 mb-6">Get started by adding your first shoe size type.</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <Plus className="w-5 h-5" />
-            <span>Add New</span>
+            <Plus className="w-4 h-4" />
+            Add First Shoe Size
           </button>
-        </div>
-      </div>
-
-      {/* Loading State */}
-      {loading ? (
-        <div className="card p-12 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       ) : (
         <>
+          {/* Search and Add Button */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by name or description..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add New
+            </button>
+          </div>
+
+          {/* Info Message */}
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-800 text-sm">
+              <Lock className="w-4 h-4 inline mr-2" />
+              Predefined items are read-only
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add New
+            </button>
+          </div>
+
           {/* Table */}
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
@@ -262,7 +263,6 @@ export default function ClothingSizesPage() {
                 <thead className="bg-slate-50">
                   <tr className="text-left text-slate-600 text-sm">
                     <th className="px-6 py-4 font-semibold">Name</th>
-                    <th className="px-6 py-4 font-semibold">Category</th>
                     <th className="px-6 py-4 font-semibold hidden lg:table-cell">Description</th>
                     <th className="px-6 py-4 font-semibold">Status</th>
                     <th className="px-6 py-4 font-semibold">Type</th>
@@ -272,19 +272,14 @@ export default function ClothingSizesPage() {
                 <tbody className="divide-y divide-slate-100">
                   {rows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                        {query ? 'No clothing sizes found matching your search.' : 'No clothing sizes found. Add one to get started.'}
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                        {query ? 'No shoe sizes found matching your search.' : 'No shoe sizes found. Add one to get started.'}
                       </td>
                     </tr>
                   ) : (
                     rows.map((row) => (
                       <tr key={row.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
-                        <td className="px-6 py-4 text-slate-600">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {getCategoryLabel(row.cloth_category)}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 text-slate-600 hidden lg:table-cell">
                           {row.description || '-'}
                         </td>
@@ -300,16 +295,18 @@ export default function ClothingSizesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          {row.is_predefined ? (
-                            <span className="flex items-center gap-1 text-slate-500 text-sm">
-                              <Lock className="w-3 h-3" />
-                              <span>Predefined</span>
-                            </span>
-                          ) : (
-                            <span className="text-slate-600 text-sm">Custom</span>
-                          )}
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              row.is_predefined
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {row.is_predefined && <Lock className="w-3 h-3" />}
+                            {row.is_predefined ? 'Predefined' : 'Custom'}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => startEdit(row)}
@@ -317,9 +314,9 @@ export default function ClothingSizesPage() {
                               className={`p-2 rounded-lg transition-colors ${
                                 row.is_predefined
                                   ? 'text-slate-300 cursor-not-allowed'
-                                  : 'text-blue-600 hover:bg-blue-50'
+                                  : 'text-slate-600 hover:text-primary hover:bg-slate-100'
                               }`}
-                              title={row.is_predefined ? 'Cannot edit predefined items' : 'Edit'}
+                              title={row.is_predefined ? 'Predefined items cannot be edited' : 'Edit shoe size'}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -329,9 +326,9 @@ export default function ClothingSizesPage() {
                               className={`p-2 rounded-lg transition-colors ${
                                 row.is_predefined
                                   ? 'text-slate-300 cursor-not-allowed'
-                                  : 'text-red-600 hover:bg-red-50'
+                                  : 'text-slate-600 hover:text-red-600 hover:bg-red-50'
                               }`}
-                              title={row.is_predefined ? 'Cannot delete predefined items' : 'Delete'}
+                              title={row.is_predefined ? 'Predefined items cannot be deleted' : 'Delete shoe size'}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -354,14 +351,15 @@ export default function ClothingSizesPage() {
 
       {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-bold text-slate-900">
-                {editingId ? 'Edit Clothing Size' : 'Add New Clothing Size'}
+              <h2 className="text-xl font-semibold text-slate-900">
+                {editingId ? 'Edit Shoe Size' : 'Add New Shoe Size'}
               </h2>
               <button
                 onClick={closeForm}
+                disabled={submitting}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -376,29 +374,10 @@ export default function ClothingSizesPage() {
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g., S, M, L, XL, XXL, 32, 34"
+                  placeholder="e.g., 8, 9, 10, 11, 12"
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   autoFocus
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={form.cloth_category}
-                  onChange={(e) => setForm({ ...form, cloth_category: e.target.value as ClothCategory })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                >
-                  {CLOTH_CATEGORIES.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-slate-500">
-                  Select the clothing type and target group
-                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -423,7 +402,7 @@ export default function ClothingSizesPage() {
               </button>
               <button
                 onClick={editingId ? saveEdit : addNew}
-                disabled={submitting || !form.name.trim() || !form.cloth_category}
+                disabled={submitting || !form.name.trim()}
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}

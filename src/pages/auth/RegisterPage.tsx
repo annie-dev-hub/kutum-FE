@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
 import logo from '@/assets/kutum-logo.png'
+import { useAuth } from '@/contexts/AuthContext'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -24,6 +24,12 @@ export default function RegisterPage() {
     e.preventDefault()
     setError(null)
 
+    // Validate phone number (required by backend)
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
+      setError('Phone number is required')
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -43,7 +49,7 @@ export default function RegisterPage() {
     })
 
     if (success) {
-      navigate('/')
+      navigate('/dashboard')
     }
   }
 
@@ -59,46 +65,51 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-700">First Name</label>
+              <label className="text-sm font-medium text-slate-700">First Name (Optional)</label>
               <input
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                required
+                placeholder="e.g., John"
                 className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Last Name</label>
+              <label className="text-sm font-medium text-slate-700">Last Name (Optional)</label>
               <input
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                required
+                placeholder="e.g., Doe"
                 className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Email</label>
-            <input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700">Phone Number</label>
+            <label className="text-sm font-medium text-slate-700">
+              Phone Number <span className="text-red-500">*</span>
+            </label>
             <input
               name="phoneNumber"
               type="tel"
               value={formData.phoneNumber}
               onChange={handleChange}
+              required
+              placeholder="e.g., 9999999999"
+              className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary"
+            />
+            <p className="mt-1 text-xs text-slate-500">Required for login and account recovery</p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Email (Optional)</label>
+            <input
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="e.g., user@example.com"
               className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary"
             />
           </div>

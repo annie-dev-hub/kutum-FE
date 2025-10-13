@@ -1,27 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Search, Edit2, Lock, Plus, Trash2, X } from 'lucide-react'
+/**
+ * Relation Types Management Page
+ * Connected to Backend API for CRUD operations
+ */
+
 import Pagination from '@/components/common/Pagination'
 import { useAuth } from '@/contexts/AuthContext'
+import type { CreateRelationTypeDto, RelationType, UpdateRelationTypeDto } from '@/types/api'
+import { relationTypeService } from '@/utils/api'
+import { Edit2, Lock, Plus, Search, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Navigate } from 'react-router-dom'
-
-export const RELATION_TYPES_STORAGE_KEY = 'kutum_relation_types'
-
-type RelationType = {
-  id: number
-  name: string
-  description: string
-  status: 'Active' | 'Inactive'
-  isPredefined: boolean
-}
-
-const INITIAL: RelationType[] = [
-  { id: 1, name: 'Father', description: 'Predefined system entry', status: 'Active', isPredefined: true },
-  { id: 2, name: 'Mother', description: 'Predefined system entry', status: 'Active', isPredefined: true },
-  { id: 3, name: 'Brother', description: 'Editable', status: 'Active', isPredefined: false },
-  { id: 4, name: 'Sister', description: 'Editable', status: 'Active', isPredefined: false },
-  { id: 5, name: 'Son', description: 'Editable', status: 'Active', isPredefined: false },
-  { id: 6, name: 'Daughter', description: 'Editable', status: 'Active', isPredefined: false },
-]
 
 export default function RelationTypesPage() {
   const { isAdmin } = useAuth()
@@ -31,77 +20,154 @@ export default function RelationTypesPage() {
     return <Navigate to="/dashboard" replace />
   }
 
+  // State
   const [query, setQuery] = useState('')
-  const [rows, setRows] = useState<RelationType[]>(() => {
-    try {
-      const stored = localStorage.getItem(RELATION_TYPES_STORAGE_KEY)
-      return stored ? JSON.parse(stored) : INITIAL
-    } catch {
-      return INITIAL
-    }
-  })
+  const [rows, setRows] = useState<RelationType[]>([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', description: '' })
+  const [submitting, setSubmitting] = useState(false)
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const data = rows
-    if (!q) return data
-    return data.filter((g) => g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
-  }, [query, rows])
-
+  // Pagination state
   const [page, setPage] = useState(1)
-  const pageSize = parseInt(import.meta.env.VITE_PAGE_SIZE) || 10
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages)
-  }, [totalPages, page])
-  const paginated = useMemo(() => {
-    const start = (page - 1) * pageSize
-    return filtered.slice(start, start + pageSize)
-  }, [filtered, page])
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const pageSize = 10
 
-  const addNew = () => {
-    const name = form.name.trim()
-    if (!name) return
-    const next: RelationType = {
-      id: rows.length ? Math.max(...rows.map((r) => r.id)) + 1 : 1,
-      name,
-      description: form.description.trim() || name,
-      status: 'Active',
-      isPredefined: false,
+  /**
+   * Fetch relation types from backend
+   */
+  const fetchRelationTypes = async () => {
+    try {
+      setLoading(true)
+      const response = await relationTypeService.getAll({
+        page,
+        limit: pageSize,
+        search: query || undefined,
+        sort_by: 'name',
+        sort_order: 'ASC',
+      })
+      
+      setRows(response.items)
+      setTotalPages(response.meta.totalPages)
+      setTotalItems(response.meta.totalItems)
+      setPage(response.meta.currentPage)
+    } catch (error) {
+      console.error('Error fetching relation types:', error)
+      toast.error('Failed to load relation types')
+    } finally {
+      setLoading(false)
     }
-    setRows((r) => [...r, next])
-    setForm({ name: '', description: '' })
-    setShowForm(false)
   }
 
+  // Fetch data when page or search query changes
+  useEffect(() => {
+    fetchRelationTypes()
+  }, [page, query])
+
+  /**
+   * Add new relation type
+   */
+  const addNew = async () => {
+    const name = form.name.trim()
+    if (!name) {
+      toast.error('Please enter a name')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const data: CreateRelationTypeDto = {
+        name,
+        description: form.description.trim() || undefined,
+        is_active: true,
+      }
+      
+      await relationTypeService.create(data)
+      toast.success('Relation type added successfully')
+      
+      // Reset form and refresh list
+      setForm({ name: '', description: '' })
+      setShowForm(false)
+      // Reset to page 1 to see the new item
+      setPage(1)
+      fetchRelationTypes()
+    } catch (error) {
+      console.error('Error adding relation type:', error)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  /**
+   * Start editing a relation type
+   */
   const startEdit = (row: RelationType) => {
-    if (row.isPredefined) return
     setEditingId(row.id)
-    setForm({ name: row.name, description: row.description })
+    setForm({ name: row.name, description: row.description || '' })
     setShowForm(true)
   }
 
-  const saveEdit = () => {
+  /**
+   * Save edited relation type
+   */
+  const saveEdit = async () => {
     if (editingId === null) return
+    
     const name = form.name.trim()
-    if (!name) return
-    setRows((r) => r.map((x) => (x.id === editingId ? { ...x, name, description: form.description.trim() } : x)))
-    setEditingId(null)
-    setShowForm(false)
-    setForm({ name: '', description: '' })
+    if (!name) {
+      toast.error('Please enter a name')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const data: UpdateRelationTypeDto = {
+        name,
+        description: form.description.trim() || undefined,
+      }
+      
+      await relationTypeService.update(editingId, data)
+      toast.success('Relation type updated successfully')
+      
+      // Reset form and refresh list
+      setEditingId(null)
+      setShowForm(false)
+      setForm({ name: '', description: '' })
+      fetchRelationTypes()
+    } catch (error) {
+      console.error('Error updating relation type:', error)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const remove = (id: number) => setRows((r) => r.filter((x) => x.id !== id))
+  /**
+   * Delete relation type (soft delete)
+   */
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+      return
+    }
 
-  // Save to localStorage whenever rows change
-  useEffect(() => {
-    localStorage.setItem(RELATION_TYPES_STORAGE_KEY, JSON.stringify(rows))
-    // Dispatch custom event to update dashboard counts
-    window.dispatchEvent(new CustomEvent('dataChanged'))
-  }, [rows])
+    try {
+      await relationTypeService.delete(id)
+      toast.success('Relation type deleted successfully')
+      fetchRelationTypes()
+    } catch (error) {
+      console.error('Error deleting relation type:', error)
+    }
+  }
+
+  /**
+   * Close form modal
+   */
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setForm({ name: '', description: '' })
+  }
 
   return (
     <div className="space-y-6">
@@ -109,98 +175,191 @@ export default function RelationTypesPage() {
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">Relation Types Management</h1>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="relative">
+      {/* Search and Add Button */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search..." className="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-slate-200 shadow-soft focus:outline-none focus:ring-2 ring-primary" />
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setPage(1) // Reset to first page on search
+            }}
+            placeholder="Search by name or description..."
+            className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-white rounded-2xl border border-slate-200 shadow-soft focus:outline-none focus:ring-2 ring-primary"
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <Lock />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden sm:flex items-center gap-2 text-slate-500 text-sm">
+            <Lock className="w-4 h-4" />
             <span>Predefined items are read-only</span>
           </div>
-          <button onClick={() => setShowForm(true)} className="gradient-btn px-4 py-2 flex items-center gap-2">
-            <Plus />
+          <button 
+            onClick={() => setShowForm(true)} 
+            className="gradient-btn px-3 sm:px-4 py-2 flex items-center gap-2 whitespace-nowrap"
+          >
+            <Plus className="w-5 h-5" />
             <span>Add New</span>
           </button>
         </div>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-slate-50">
-              <tr className="text-left text-slate-600 text-sm">
-                <th className="px-6 py-4 font-semibold">ID</th>
-                <th className="px-6 py-4 font-semibold">Name</th>
-                <th className="px-6 py-4 font-semibold">Description</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((g, idx) => (
-                <tr key={g.id} className={idx % 2 ? 'bg-slate-50/40' : ''}>
-                  <td className="px-6 py-4 text-slate-700">{g.id}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">{g.name}</td>
-                  <td className="px-6 py-4 text-slate-600">{g.description}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {g.isPredefined ? (
-                      <span title="Read-only" className="text-slate-400 inline-flex items-center gap-2">
-                        <Lock />
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <button title="Edit" onClick={() => startEdit(g)} className="text-blue-600 inline-flex items-center">
-                          <Edit2 />
-                        </button>
-                        <button title="Delete" onClick={() => remove(g.id)} className="text-rose-600 inline-flex items-center">
-                          <Trash2 />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Loading State */}
+      {loading ? (
+        <div className="card p-12 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Table */}
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-slate-50">
+                  <tr className="text-left text-slate-600 text-sm">
+                    <th className="px-6 py-4 font-semibold">Name</th>
+                    <th className="px-6 py-4 font-semibold hidden md:table-cell">Description</th>
+                    <th className="px-6 py-4 font-semibold">Status</th>
+                    <th className="px-6 py-4 font-semibold">Type</th>
+                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                        {query ? 'No relation types found matching your search.' : 'No relation types found. Add one to get started.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    rows.map((row) => (
+                      <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
+                        <td className="px-6 py-4 text-slate-600 hidden md:table-cell">
+                          {row.description || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              row.is_active
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {row.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {row.is_predefined ? (
+                            <span className="flex items-center gap-1 text-slate-500 text-sm">
+                              <Lock className="w-3 h-3" />
+                              <span>Predefined</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 text-sm">Custom</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => startEdit(row)}
+                              disabled={row.is_predefined}
+                              className={`p-2 rounded-lg transition-colors ${
+                                row.is_predefined
+                                  ? 'text-slate-300 cursor-not-allowed'
+                                  : 'text-blue-600 hover:bg-blue-50'
+                              }`}
+                              title={row.is_predefined ? 'Cannot edit predefined items' : 'Edit'}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => remove(row.id, row.name)}
+                              disabled={row.is_predefined}
+                              className={`p-2 rounded-lg transition-colors ${
+                                row.is_predefined
+                                  ? 'text-slate-300 cursor-not-allowed'
+                                  : 'text-red-600 hover:bg-red-50'
+                              }`}
+                              title={row.is_predefined ? 'Cannot delete predefined items' : 'Delete'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      <div className="flex justify-end">
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          )}
+        </>
+      )}
 
+      {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/30 grid place-items-center p-4">
-          <div className="w-full max-w-lg card p-6 relative">
-            <button onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-              <X />
-            </button>
-            <h3 className="text-xl font-semibold mb-4">{editingId ? 'Edit Relation Type' : 'Add Relation Type'}</h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-bold text-slate-900">
+                {editingId ? 'Edit Relation Type' : 'Add New Relation Type'}
+              </h2>
+              <button
+                onClick={closeForm}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-700">Name</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" placeholder="e.g. Uncle" />
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g., Self, Spouse, Son, Daughter"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700">Description</label>
-                <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" placeholder="Short description" />
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Enter description..."
+                  rows={3}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700">Cancel</button>
-                {editingId ? (
-                  <button onClick={saveEdit} className="gradient-btn px-4 py-2">Save Changes</button>
-                ) : (
-                  <button onClick={addNew} className="gradient-btn px-4 py-2">Save</button>
-                )}
-              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t bg-slate-50 rounded-b-2xl">
+              <button
+                onClick={closeForm}
+                disabled={submitting}
+                className="px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={editingId ? saveEdit : addNew}
+                disabled={submitting || !form.name.trim()}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                <span>{editingId ? 'Update' : 'Add'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -208,5 +367,3 @@ export default function RelationTypesPage() {
     </div>
   )
 }
-
-

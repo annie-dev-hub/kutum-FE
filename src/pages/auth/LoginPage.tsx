@@ -1,11 +1,11 @@
+import logo from '@/assets/kutum-logo.png'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import logo from '@/assets/kutum-logo.png'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@kutum.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('admin@example.com')
+  const [password, setPassword] = useState('Admin@123')
   const [error, setError] = useState<string | null>(null)
   const { login, loading } = useAuth()
   const navigate = useNavigate()
@@ -19,7 +19,7 @@ export default function LoginPage() {
       const to = location.state?.from?.pathname || '/dashboard'
       navigate(to, { replace: true })
     } else {
-      setError('Invalid credentials. Use admin@kutum.com / admin123 for admin or register for user account')
+      setError('Invalid credentials. Use admin@example.com / Admin@123 for admin or register for user account')
     }
   }
 
@@ -31,19 +31,31 @@ export default function LoginPage() {
         </div>
         <h1 className="text-3xl font-extrabold text-center text-primary">Kutum</h1>
         <p className="text-center text-slate-500 mb-6">Family Management System</p>
-        <div className="text-center text-sm text-gray-500 mb-4">
-          <p>Demo: admin@kutum.com / admin123</p>
-          <p>Or register for a new user account</p>
-        </div>
+      
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700">Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" />
+            <label className="text-sm font-medium text-slate-700">Email or Mobile Number</label>
+            <input 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              type="text"
+              placeholder="admin@example.com or 0000000000"
+              required
+              className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" 
+            />
+            <p className="mt-1 text-xs text-slate-500">You can use either email or mobile number</p>
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700">Password</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" />
+            <input 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              type="password"
+              required
+              placeholder="Enter your password"
+              className="mt-1 w-full rounded-xl bg-slate-100/80 px-4 py-3 outline-none focus:ring-2 ring-primary" 
+            />
           </div>
           {error && <p className="text-rose-600 text-sm">{error}</p>}
           <button disabled={loading} className="gradient-btn w-full py-3 text-center">

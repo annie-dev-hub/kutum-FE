@@ -7,11 +7,11 @@
  * Sets up the root component and React Router
  */
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import './index.css' // Global styles (Tailwind CSS)
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import './index.css'; // Global styles (Tailwind CSS)
 
 /**
  * Initialize React application
@@ -24,7 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {/* Router wrapper enables navigation without page reloads */}
     <BrowserRouter>
-      <App /> {/* Main app with AI chatbot, document scanner, and all features */}
+      <App /> {/* Main app with document scanner and all features (chatbot currently disabled) */}
     </BrowserRouter>
   </React.StrictMode>,
 )

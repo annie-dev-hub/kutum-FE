@@ -6,25 +6,29 @@
  * Manages user authentication state globally across the application
  * 
  * Features:
- * - User login/registration
+ * - User login/registration via backend API
+ * - JWT token management
  * - Session persistence via localStorage
- * - Role-based access (admin/user)
+ * - Role-based access (admin/normal)
  * - Protected route support
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import toast from 'react-hot-toast' // For user notifications
+import { authService } from '@/utils/api';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast'; // For user notifications
 
 /**
  * User interface - Defines the structure of user data
+ * Now includes access_token for JWT authentication
  */
 export interface User {
   id: string
-  firstName: string
-  lastName: string
-  email: string
+  firstName: string | null
+  lastName: string | null
+  email: string | null
   phoneNumber: string
-  role: 'admin' | 'user' // Determines access level
+  role: 'admin' | 'normal' // Backend uses 'normal' instead of 'user'
+  access_token: string // JWT token for authenticated requests
 }
 
 /**
@@ -41,12 +45,13 @@ interface AuthContextType {
 
 /**
  * Registration data interface - Data needed to create new user account
+ * Updated to match backend API requirements
  */
 export interface RegisterData {
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  phoneNumber: string // Required by backend (mobile field)
   password: string
 }
 
@@ -66,157 +71,149 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * On app startup, check if user is already logged in
-   * Restores user session from localStorage if available
+   * Restores user session from localStorage and validates with backend
    */
   useEffect(() => {
-    // Try to restore user session from localStorage
-    const savedUser = localStorage.getItem('kutum_user')
-    console.log('AuthContext useEffect - savedUser:', savedUser)
-    
-    if (savedUser) {
-      // Parse and restore user data
-      const parsedUser = JSON.parse(savedUser)
-      console.log('AuthContext - parsed user:', parsedUser)
-      setUser(parsedUser)
+    const initAuth = async () => {
+      try {
+        // Try to restore user session from localStorage
+        const savedUser = localStorage.getItem('kutum_user')
+        console.log('AuthContext useEffect - savedUser:', savedUser)
+        
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser)
+          console.log('AuthContext - parsed user:', parsedUser)
+          
+          // Validate token with backend (optional - validates session)
+          try {
+            await authService.me()
+            setUser(parsedUser)
+          } catch (error) {
+            // Token is invalid or expired, clear local storage
+            console.error('Session validation failed:', error)
+            localStorage.removeItem('kutum_user')
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+      } finally {
+        setLoading(false)
+      }
     }
     
-    // Done checking auth status
-    setLoading(false)
+    initAuth()
   }, [])
 
   /**
    * ========== LOGIN FUNCTION ==========
-   * Authenticates user with email and password
+   * Authenticates user with email or mobile number via backend API
    * 
-   * @param email - User's email address
+   * @param emailOrMobile - User's email address or mobile number
    * @param password - User's password
    * @returns Promise<boolean> - True if login successful, false otherwise
    * 
    * Process:
-   * 1. Validates credentials
-   * 2. Checks admin credentials first
-   * 3. Then checks regular user database
-   * 4. Stores user session in localStorage
-   * 5. Updates global auth state
+   * 1. Calls backend API with credentials
+   * 2. Receives JWT token and user data
+   * 3. Stores token and user data in localStorage
+   * 4. Updates global auth state
    */
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (emailOrMobile: string, password: string): Promise<boolean> => {
     try {
       setLoading(true)
+      console.log('Attempting login for:', emailOrMobile)
       
-      // Simulate API call delay (in real app, this would be actual API request)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Determine if input is email or mobile
+      const isEmail = emailOrMobile.includes('@')
       
-      // ADMIN LOGIN: Check for admin credentials first
-      if (email === 'admin@kutum.com' && password === 'admin123') {
-        console.log('Admin login attempt successful')
-        
-        // Create admin user object
-        const adminUser: User = {
-          id: 'admin',
-          firstName: 'Admin',
-          lastName: 'User',
-          email: 'admin@kutum.com',
-          phoneNumber: '',
-          role: 'admin' // Admin role gives access to configuration pages
-        }
-        
-        console.log('Setting admin user:', adminUser)
-        setUser(adminUser) // Update global state
-        localStorage.setItem('kutum_user', JSON.stringify(adminUser)) // Persist session
-        toast.success('Admin login successful!')
-        return true
+      // Call backend API
+      const response: AuthResponse = await authService.login({
+        email: isEmail ? emailOrMobile : undefined,
+        mobile: !isEmail ? emailOrMobile : undefined,
+        password,
+      })
+      
+      console.log('Login response:', response)
+      
+      // Transform backend response to our User interface
+      const user: User = {
+        id: response.user_id,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        email: response.email,
+        phoneNumber: response.mobile,
+        role: response.role,
+        access_token: response.access_token,
       }
       
-      // REGULAR USER LOGIN: Check against registered users in localStorage
-      const users = JSON.parse(localStorage.getItem('kutum_users') || '[]')
-      const foundUser = users.find((u: User & { password: string }) => 
-        u.email === email && u.password === password // Match email and password
-      )
+      // Update state and persist to localStorage
+      setUser(user)
+      localStorage.setItem('kutum_user', JSON.stringify(user))
       
-      if (foundUser) {
-        // Remove password from user object before storing (security)
-        const { password: _, ...userWithoutPassword } = foundUser
-        setUser(userWithoutPassword) // Update global state
-        localStorage.setItem('kutum_user', JSON.stringify(userWithoutPassword)) // Persist session
-        toast.success('Login successful!')
-        return true
-      } else {
-        // Invalid credentials
-        toast.error('Invalid credentials')
-        return false
-      }
-    } catch (error) {
-      // Handle any unexpected errors
-      toast.error('Login failed. Please try again.')
+      toast.success(`Welcome back, ${user.firstName || 'User'}!`)
+      console.log('Login successful:', user)
+      return true
+    } catch (error: any) {
+      console.error('Login error:', error)
+      // Error toast is handled by axios interceptor
       return false
     } finally {
-      // Always stop loading state
       setLoading(false)
     }
   }
 
   /**
    * ========== REGISTRATION FUNCTION ==========
-   * Creates new user account
+   * Creates new user account via backend API
    * 
    * @param userData - User registration information
    * @returns Promise<boolean> - True if registration successful, false otherwise
    * 
    * Process:
-   * 1. Validates email is unique
-   * 2. Creates new user with default 'user' role
-   * 3. Stores in localStorage (in real app, would be database)
-   * 4. Returns success/failure
-   * 
-   * Note: In production, password should be hashed before storage
+   * 1. Calls backend API with user data
+   * 2. Backend validates and creates account
+   * 3. Receives JWT token and auto-logs in the user
+   * 4. Updates global auth state
    */
   const register = async (userData: RegisterData): Promise<boolean> => {
     try {
       setLoading(true)
-      console.log('Starting registration for:', userData.email)
+      console.log('Starting registration for:', userData.email || userData.phoneNumber)
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Call backend API
+      const response: AuthResponse = await authService.register({
+        email: userData.email,
+        mobile: userData.phoneNumber,
+        password: userData.password,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+      })
       
-      // Load existing users from localStorage
-      const users = JSON.parse(localStorage.getItem('kutum_users') || '[]')
-      console.log('Existing users:', users.length)
+      console.log('Registration response:', response)
       
-      // Check if email is already registered
-      const existingUser = users.find((u: User) => 
-        u.email === userData.email
-      )
-      
-      if (existingUser) {
-        // Email already exists - reject registration
-        console.log('User already exists:', existingUser.email)
-        toast.error('User with this email already exists')
-        return false
+      // Transform backend response to our User interface
+      const user: User = {
+        id: response.user_id,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        email: response.email,
+        phoneNumber: response.mobile,
+        role: response.role,
+        access_token: response.access_token,
       }
       
-      // Create new user object
-      const newUser = {
-        id: Date.now().toString(), // Generate unique ID
-        ...userData, // Spread all user data
-        password: userData.password, // ⚠️ In real app, this would be hashed!
-        role: 'user' as const // All new users start as regular users (not admin)
-      }
+      // Update state and persist to localStorage (auto-login after registration)
+      setUser(user)
+      localStorage.setItem('kutum_user', JSON.stringify(user))
       
-      // Add to users array and save
-      users.push(newUser)
-      localStorage.setItem('kutum_users', JSON.stringify(users))
-      console.log('User registered successfully:', newUser.email)
-      
-      // Show success message
-      toast.success('Registration successful! Please login.')
+      toast.success('Registration successful! Welcome to Kutum!')
+      console.log('Registration successful:', user)
       return true
-    } catch (error) {
-      // Handle any errors during registration
+    } catch (error: any) {
       console.error('Registration error:', error)
-      toast.error('Registration failed. Please try again.')
+      // Error toast is handled by axios interceptor
       return false
     } finally {
-      // Always stop loading state
       setLoading(false)
     }
   }

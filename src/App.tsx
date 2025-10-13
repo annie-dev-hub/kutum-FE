@@ -21,31 +21,34 @@
  * - RAG (Retrieval Augmented Generation) for intelligent responses
  */
 
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
 
 // ========== AUTH PAGES ==========
+import ProtectedRoute from './components/auth/ProtectedRoute'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
-import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // ========== ADMIN PAGES ==========
 // Note: AdminDashboardPage imported through DashboardEntry
-import UserProfilePage from './pages/admin/UserProfilePage'
+import AdminTrendsDashboard from './components/admin/AdminTrendsDashboard'
 import BloodGroupsPage from './pages/admin/BloodGroupsPage'
 import ClothingSizesPage from './pages/admin/ClothingSizesPage'
 import DocumentTypesPage from './pages/admin/DocumentTypesPage'
 import RelationTypesPage from './pages/admin/RelationTypesPage'
-import AdminTrendsDashboard from './components/admin/AdminTrendsDashboard'
+import ShoeSizesPage from './pages/admin/ShoeSizesPage'
+import UserFamilyPage from './pages/admin/UserFamilyPage'
+import UserProfilePage from './pages/admin/UserProfilePage'
+import UsersPage from './pages/admin/UsersPage'
 
 // ========== USER PAGES ==========
 // Note: UserDashboardPage imported through DashboardEntry
 import DashboardEntry from './pages/DashboardEntry'
-import PeoplePage from './pages/user/PeoplePage'
-import DocumentsPage from './pages/user/DocumentsPage' // Includes AI document scanner
-import VehiclesPage from './pages/user/VehiclesPage'
+import DocumentsPage from './pages/user/DocumentsPage'; // Includes AI document scanner
 import HealthPage from './pages/user/HealthPage'
+import PeoplePage from './pages/user/PeoplePage'
+import VehiclesPage from './pages/user/VehiclesPage'
 
 // ========== LAYOUT COMPONENTS ==========
 import TopNav from './components/layout/TopNav'
@@ -132,6 +135,48 @@ function App() {
                 <TopNav role="admin" />
                 <main className="px-4 sm:px-6 lg:px-8 py-6">
                   <RelationTypesPage />
+                </main>
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/shoe-sizes" 
+          element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-50">
+                <TopNav role="admin" />
+                <main className="px-4 sm:px-6 lg:px-8 py-6">
+                  <ShoeSizesPage />
+                </main>
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-50">
+                <TopNav role="admin" />
+                <main className="px-4 sm:px-6 lg:px-8 py-6">
+                  <UsersPage />
+                </main>
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin/users/:id/family" 
+          element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-50">
+                <TopNav role="admin" />
+                <main className="px-4 sm:px-6 lg:px-8 py-6">
+                  <UserFamilyPage />
                 </main>
               </div>
             </ProtectedRoute>
